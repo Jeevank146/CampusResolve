@@ -1,0 +1,72 @@
+{
+  "name": "CampusResolve – Escalation Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "55b51cec-97b9-43f7-b885-792f4785bc85",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH overdue AS (\n    SELECT\n        g.id,\n        g.ticket_code,\n        g.status,\n        g.assigned_department\n    FROM grievances g\n    WHERE g.status IN ('Open', 'In Progress')\n      AND COALESCE(g.updated_at, g.created_at)\n          <= NOW() - INTERVAL '48 hours'\n      AND NOT EXISTS (\n          SELECT 1\n          FROM grievance_updates u\n          WHERE u.grievance_id = g.id\n            AND u.updated_by = 'Escalation Agent'\n            AND u.update_note LIKE 'AUTO_ESCALATED:%'\n      )\n),\nmoved AS (\n    UPDATE grievances g\n    SET\n        assigned_department = 'Admin Review (Escalated)',\n        updated_at = NOW()\n    FROM overdue o\n    WHERE g.id = o.id\n    RETURNING\n        g.id,\n        g.ticket_code,\n        g.status,\n        o.assigned_department AS previous_department\n),\nlogged AS (\n    INSERT INTO grievance_updates (\n        grievance_id,\n        status,\n        update_note,\n        updated_by,\n        created_at\n    )\n    SELECT\n        id,\n        status,\n        'AUTO_ESCALATED: Unresolved for 48 hours. Previous department: '\n        || COALESCE(previous_department, 'Unassigned')\n        || '. Sent to Admin Review.',\n        'Escalation Agent',\n        NOW()\n    FROM moved\n    RETURNING grievance_id\n)\nSELECT\n    m.ticket_code,\n    m.status,\n    m.previous_department,\n    'Admin Review (Escalated)' AS assigned_department\nFROM moved m\nJOIN logged l ON l.grievance_id = m.id;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.8,
+      "position": [
+        224,
+        0
+      ],
+      "id": "80e37e1b-344c-43e5-a6da-65676164b399",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "ea4fLGCzP6P4NEdr",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "16583638-1579-4540-b1eb-fb2689d3350b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7fd50924b60af66009f207377104af22a88b24d2f7ac1f91a04de16564467f44"
+  },
+  "nodeGroups": [],
+  "id": "ZtxU2jOaYcSLD7AZ",
+  "tags": []
+}

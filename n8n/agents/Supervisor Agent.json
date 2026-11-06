@@ -1,0 +1,621 @@
+{
+  "name": "CampusResolve - Supervisor Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "campusresolve/supervisor",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "4506e1a0-3f85-4b2b-b0dd-238bacbf9b81",
+      "name": "Webhook",
+      "webhookId": "89caf6f9-ae88-4cac-a864-0bbb7f7f1641"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "dddb9bc8-335c-4e84-8fe5-29900c9d4752",
+              "name": "=event",
+              "value": "={{ $json.body.event }}",
+              "type": "string"
+            },
+            {
+              "id": "54d08f13-efe4-41dc-9e3d-c0f8e9e4edcc",
+              "name": "=source",
+              "value": "={{ $json.body.source }}",
+              "type": "string"
+            },
+            {
+              "id": "27ce9b14-46cf-4db2-acf2-13cdc5336bc3",
+              "name": "message",
+              "value": "={{ $json.body.message }}",
+              "type": "string"
+            },
+            {
+              "id": "6cc01eed-2367-4728-a25f-3e06d8aac2ba",
+              "name": "=context",
+              "value": "={{ $json.body.context }}",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "6b9424fb-0a2e-4561-921a-c91944b62d38",
+      "name": "Normalize Supervisor Input"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "=campusresolve.test",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "3ce48b8d-b438-40f8-a781-e7f4dd7527f9"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "test"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "619abc5b-7776-4600-a9fc-5ee97097e8cf",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "knowledge.query",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "knowledge"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "79ebe522-0fbd-44c4-b39d-853bc298874b",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "grievance.triage",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "triage"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "e5db38e2-a096-45d1-95ee-99bedf77e360",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "grievance.route",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "routing"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "d4b58d44-edcc-4ac0-82e9-97a5b6d8966c",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "grievance.followup",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "followup"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "21b51a21-40fc-48af-aad6-1f73853d2821",
+      "name": "Switch — Event Dispatcher"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "pcoEkNOurFK1mL86",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/pcoEkNOurFK1mL86",
+          "cachedResultName": "CampusResolve - Knowledge Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        864,
+        -48
+      ],
+      "id": "e094443e-789b-4012-80f5-b2b282d2ba8f",
+      "name": "Call 'CampusResolve - Knowledge Agent'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "OgUhRXjSyMcwbov8",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/OgUhRXjSyMcwbov8",
+          "cachedResultName": "CampusResolve - Triage Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "event": "={{ $json.event }}",
+            "source": "={{ $json.source }}",
+            "message": "={{ $json.message }}",
+            "context": "={{ $json.context }}",
+            "ticket_code": "={{ $json.context.ticket_code }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "event",
+              "displayName": "event",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "context",
+              "displayName": "context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object",
+              "removed": false
+            },
+            {
+              "id": "ticket_code",
+              "displayName": "ticket_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        848,
+        144
+      ],
+      "id": "8e319003-9866-4f63-a1ce-464180919db8",
+      "name": "Call 'CampusResolve - Triage Agent'"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "qUmWFrj0QO7FnBul",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/qUmWFrj0QO7FnBul",
+          "cachedResultName": "CampusResolve - Routing Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "event": "=grievance.route",
+            "source": "=supervisor",
+            "message": "={{ 'Subject: ' + $json.subject + '\\nDescription: ' + $json.description + '\\nCategory: ' + $json.category + '\\nPriority: ' + $json.priority + '\\nUrgency: ' + $json.urgency }}",
+            "context": "={{ { ticket_code: $json.ticket_code, category: $json.category, priority: $json.priority, urgency: $json.urgency } }}",
+            "ticket_code": "={{ $('Normalize Supervisor Input').first().json.context.ticket_code }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "event",
+              "displayName": "event",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "context",
+              "displayName": "context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object",
+              "removed": false
+            },
+            {
+              "id": "ticket_code",
+              "displayName": "ticket_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        848,
+        352
+      ],
+      "id": "5e4dfb9e-064f-43a6-aa6c-984b1fe0dce5",
+      "name": "Call 'CampusResolve - Routing Agent'",
+      "retryOnFail": true,
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "L9UIsXMcuw8md966",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/L9UIsXMcuw8md966",
+          "cachedResultName": "CampusResolve – Follow-up Agent."
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "event": "={{ $json.event }}",
+            "source": "={{ $json.source }}",
+            "message": "={{ $json.message }}",
+            "context": "={{ $json.context }}",
+            "ticket_code": "={{ $json.context.ticket_code }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "event",
+              "displayName": "event",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "source",
+              "displayName": "source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "context",
+              "displayName": "context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "object",
+              "removed": false
+            },
+            {
+              "id": "ticket_code",
+              "displayName": "ticket_code",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        848,
+        544
+      ],
+      "id": "1fd04e27-7552-4ec9-ae44-74d129a13436",
+      "name": "Call 'CampusResolve – Follow-up Agent.'"
+    },
+    {
+      "parameters": {
+        "jsCode": "return $input.all().map(item => ({\n  json: {\n    agent: \"supervisor\",\n    event: item.json.event,\n    status: \"success\",\n    message: \"CampusResolve workflow is working correctly.\"\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        864,
+        -208
+      ],
+      "id": "7990efa5-9324-4c57-b118-4086627b3760",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nfunction findAnswer(value, depth = 0) {\n  if (depth > 10 || value == null) return '';\n\n  if (Array.isArray(value)) {\n    for (const item of value) {\n      const result = findAnswer(item, depth + 1);\n      if (result) return result;\n    }\n    return '';\n  }\n\n  if (typeof value === 'string') {\n    const text = value.trim();\n\n    if (!text || /workflow was started/i.test(text)) return '';\n\n    if (text.startsWith('{') || text.startsWith('[')) {\n      try {\n        return findAnswer(JSON.parse(text), depth + 1);\n      } catch {\n        // Keep normal text as the answer.\n      }\n    }\n\n    return text;\n  }\n\n  if (typeof value === 'object') {\n    for (const key of [\n      'answer', 'response', 'output', 'text',\n      'n8n_response', 'data', 'result', 'body'\n    ]) {\n      if (value[key] !== undefined) {\n        const result = findAnswer(value[key], depth + 1);\n        if (result) return result;\n      }\n    }\n  }\n\n  return '';\n}\n\nconst answer = findAnswer(\n  $input.all().map(item => item.json)\n);\n\nif (!answer) {\n  throw new Error('Knowledge Agent returned no answer.');\n}\n\nreturn [{\n  json: {\n    status: 'success',\n    agent: 'knowledge',\n    answer,\n    response: answer\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1088,
+        -48
+      ],
+      "id": "e861978f-9177-4462-827d-76f8e62847b4",
+      "name": "Prepare Knowledge Response"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Supervisor Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Supervisor Input": {
+      "main": [
+        [
+          {
+            "node": "Switch — Event Dispatcher",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch — Event Dispatcher": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call 'CampusResolve - Knowledge Agent'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call 'CampusResolve - Triage Agent'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call 'CampusResolve - Routing Agent'",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Call 'CampusResolve – Follow-up Agent.'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'CampusResolve - Triage Agent'": {
+      "main": [
+        [
+          {
+            "node": "Call 'CampusResolve - Routing Agent'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call 'CampusResolve - Knowledge Agent'": {
+      "main": [
+        [
+          {
+            "node": "Prepare Knowledge Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "c2c18e5d-c5dc-48eb-815d-507f76e18434",
+  "meta": {
+    "instanceId": "7fd50924b60af66009f207377104af22a88b24d2f7ac1f91a04de16564467f44"
+  },
+  "nodeGroups": [],
+  "id": "yfvK9bLRZ1Mmzuyb",
+  "tags": []
+}

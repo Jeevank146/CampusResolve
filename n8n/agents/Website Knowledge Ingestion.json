@@ -1,0 +1,258 @@
+{
+  "name": "CampusResolve – Website Knowledge Ingestion",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7f896ba1-11c6-4e08-80fa-641fa7a01302",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst pages = [\n  {\n    url: \"https://www.vignan.ac.in/\",\n    topic: \"University Information\"\n  },\n  {\n    url: \"https://www.vignan.ac.in/notifications.php\",\n    topic: \"Academic and Examination Notifications\"\n  },\n  {\n    url: \"https://www.vignan.ac.in/exam_home.php\",\n    topic: \"Examinations and Results\"\n  },\n  {\n    url: \"https://www.vignan.ac.in/calender.php\",\n    topic: \"Academic Calendar\"\n  },\n  {\n    url: \"https://www.vignan.ac.in/policies.php\",\n    topic: \"University Policies\"\n  },\n  {\n    url: \"https://www.vignan.ac.in/Regulations.php\",\n    topic: \"Academic Regulations\"\n  },\n  {\n    url: \"https://www.vignan.ac.in/generalfacilities.php\",\n    topic: \"Campus and Transport Facilities\"\n  },\n  {\n    url: \"https://www.vignan.ac.in/u-life.php\",\n    topic: \"Hostel and University Life\"\n  }\n];\n\nreturn pages.map(page => ({\n  json: {\n    ...page,\n    source: \"VFSTR Official Website\"\n  }\n}));\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "dcc327ee-2b79-45bf-aa67-eb14492341cb",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "text",
+              "outputPropertyName": "output"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        0
+      ],
+      "id": "85c61be1-effa-409f-a846-ef96d691c365",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst items = $input.all();\n\nconst excludedTags = new Set([\n  \"script\", \"style\", \"noscript\", \"svg\",\n  \"iframe\", \"form\", \"nav\", \"header\", \"footer\"\n]);\n\nconst excludedClasses = [\n  \"top-nav\", \"campus-nav\", \"navbar\",\n  \"dropdown\", \"megamenu\", \"menu\",\n  \"header-ul\", \"topnav-ul\",\n  \"search-box\", \"search-mbl\",\n  \"modal\", \"footer\", \"navbar-header\"\n];\n\nconst voidTags = new Set([\n  \"area\", \"base\", \"br\", \"col\", \"embed\",\n  \"hr\", \"img\", \"input\", \"link\", \"meta\",\n  \"param\", \"source\", \"track\", \"wbr\"\n]);\n\nfunction removeUnwantedElements(html) {\n  const regex = /<!--[\\s\\S]*?-->|<![^>]*>|<\\/?[a-zA-Z][^>]*>/g;\n\n  let result = \"\";\n  let position = 0;\n  const suppressed = [];\n\n  for (const match of html.matchAll(regex)) {\n    const token = match[0];\n    const index = match.index;\n\n    if (suppressed.length === 0) {\n      result += html.slice(position, index);\n    }\n\n    position = index + token.length;\n\n    const closing = token.match(/^<\\s*\\/\\s*([\\w:-]+)/);\n\n    if (closing) {\n      if (suppressed.length) {\n        const tag = closing[1].toLowerCase();\n        const found = suppressed.lastIndexOf(tag);\n\n        if (found !== -1) {\n          suppressed.length = found;\n        }\n      } else {\n        result += token;\n      }\n      continue;\n    }\n\n    const opening = token.match(/^<\\s*([\\w:-]+)/);\n    if (!opening) continue;\n\n    const tag = opening[1].toLowerCase();\n    const classMatch = token.match(/\\bclass\\s*=\\s*[\"']([^\"']*)[\"']/i);\n    const classes = classMatch ? classMatch[1].toLowerCase() : \"\";\n\n    const remove =\n      excludedTags.has(tag) ||\n      excludedClasses.some(name => classes.includes(name));\n\n    const selfClosing =\n      /\\/\\s*>$/.test(token) || voidTags.has(tag);\n\n    if (suppressed.length) {\n      if (!selfClosing) suppressed.push(tag);\n    } else if (remove) {\n      if (!selfClosing) suppressed.push(tag);\n    } else {\n      result += token;\n    }\n  }\n\n  if (suppressed.length === 0) {\n    result += html.slice(position);\n  }\n\n  return result;\n}\n\nfunction cleanText(html) {\n  return removeUnwantedElements(html)\n    .replace(/<br\\s*\\/?>/gi, \"\\n\")\n    .replace(/<\\/(p|div|section|article|li|h[1-6]|tr)>/gi, \"\\n\")\n    .replace(/<[^>]*>/g, \" \")\n    .replace(/&#(\\d+);/g, (_, n) =>\n      String.fromCodePoint(Number(n))\n    )\n    .replace(/&#x([0-9a-f]+);/gi, (_, n) =>\n      String.fromCodePoint(parseInt(n, 16))\n    )\n    .replace(/&nbsp;/gi, \" \")\n    .replace(/&amp;/gi, \"&\")\n    .replace(/&lt;/gi, \"<\")\n    .replace(/&gt;/gi, \">\")\n    .replace(/&quot;/gi, '\"')\n    .replace(/&#39;|&apos;/gi, \"'\")\n    .replace(/&rsquo;/gi, \"'\")\n    .replace(/&mdash;/gi, \"-\")\n    .replace(/[ \\t]+/g, \" \")\n    .replace(/ *\\n */g, \"\\n\")\n    .replace(/\\n{3,}/g, \"\\n\\n\")\n    .trim();\n}\n\nreturn items\n  .filter(item => item.json.statusCode === 200)\n  .map(item => {\n    const html = item.json.output || \"\";\n    const titleMatch = html.match(\n      /<title[^>]*>([\\s\\S]*?)<\\/title>/i\n    );\n\n    const title = titleMatch\n      ? cleanText(titleMatch[1])\n      : item.json.topic;\n\n    const content = cleanText(html);\n\n    return {\n      json: {\n        title,\n        topic: item.json.topic,\n        source: item.json.source,\n        source_url: item.json.url,\n        content\n      }\n    };\n  })\n  .filter(item => item.json.content.length > 100);\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "088eda92-2717-4329-bf4d-2237444bc422",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        896,
+        0
+      ],
+      "id": "49f814f9-c421-4cd9-8693-a98d02a59cb9",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.4,
+      "position": [
+        1136,
+        64
+      ],
+      "id": "241ba713-9eac-4cf6-8280-e9925aa742bb",
+      "name": "Postgres PGVector Store",
+      "credentials": {
+        "postgres": {
+          "id": "ea4fLGCzP6P4NEdr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "={{ $json.content }}",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "=title",
+                "value": "={{ $json.title }}"
+              },
+              {
+                "name": "=topic",
+                "value": "={{ $('Code in JavaScript').item.json.topic }}"
+              },
+              {
+                "name": "=source",
+                "value": "={{ $('Code in JavaScript').item.json.source }}"
+              },
+              {
+                "name": "source_url",
+                "value": "={{ $('Code in JavaScript').item.json.url }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1280,
+        336
+      ],
+      "id": "0c71cfd7-9f40-4ad5-ba72-b5a0777fed4a",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "model": "bge-m3:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        1056,
+        336
+      ],
+      "id": "78d7e1b2-7c64-47af-9635-71286b9881c8",
+      "name": "Embeddings Ollama",
+      "credentials": {
+        "ollamaApi": {
+          "id": "xUzaT3ohcR406zOn",
+          "name": "Ollama account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres PGVector Store": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7ed551a8-b08b-49b2-a3ce-0a598376c349",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7fd50924b60af66009f207377104af22a88b24d2f7ac1f91a04de16564467f44"
+  },
+  "nodeGroups": [],
+  "id": "jYhR6KR1elZL3Oo4",
+  "tags": []
+}

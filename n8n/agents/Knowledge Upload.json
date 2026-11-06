@@ -1,0 +1,134 @@
+{
+  "name": "CampusResolve – Knowledge Upload",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "CampusResolve Knowledge Upload",
+        "formDescription": "Upload official university knowledge documents",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Upload University Document",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "acceptFileTypes": ".pdf, .txt, .docx",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        0,
+        0
+      ],
+      "id": "fef5a6bf-7c66-42e1-8e50-15f549eea537",
+      "name": "On form submission",
+      "webhookId": "8c1b678e-8b91-4500-8388-2e955ac21f08"
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "216eb7dd-b0e5-4a59-be8c-244716ca0636",
+      "name": "Postgres PGVector Store",
+      "credentials": {
+        "postgres": {
+          "id": "ea4fLGCzP6P4NEdr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        224
+      ],
+      "id": "f51e3ecf-f7ff-4a60-a194-1a7e987e371f",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "model": "bge-m3:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        192,
+        208
+      ],
+      "id": "4fdc6e5e-d51c-4b82-a6cc-37122bcc4e5f",
+      "name": "Embeddings Ollama",
+      "credentials": {
+        "ollamaApi": {
+          "id": "xUzaT3ohcR406zOn",
+          "name": "Ollama account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "bb161789-6120-45dd-a942-836ea924fe7f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7fd50924b60af66009f207377104af22a88b24d2f7ac1f91a04de16564467f44"
+  },
+  "nodeGroups": [],
+  "id": "SuxPjIEzmOwjnEKm",
+  "tags": []
+}

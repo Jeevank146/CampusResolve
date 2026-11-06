@@ -1,0 +1,44 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: campusresolve-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: campusresolve
+      POSTGRES_USER: campusresolve
+      POSTGRES_PASSWORD: campusresolve_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - campusresolve_pgdata:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campusresolve -d campusresolve"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: campusresolve-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      GENERIC_TIMEZONE: "Asia/Kolkata"
+      N8N_EDITOR_BASE_URL: "http://localhost:5678/"
+      N8N_ENCRYPTION_KEY: "change_this_to_a_long_random_secret_before_using_real_credentials"
+      N8N_HOST: "localhost"
+      N8N_PORT: "5678"
+      N8N_PROTOCOL: "http"
+      TZ: "Asia/Kolkata"
+      WEBHOOK_URL: "http://localhost:5678/"
+    volumes:
+      - campusresolve_n8n_data:/home/node/.n8n
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  campusresolve_pgdata:
+  campusresolve_n8n_data:

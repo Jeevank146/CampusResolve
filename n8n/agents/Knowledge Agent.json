@@ -1,0 +1,292 @@
+{
+  "name": "CampusResolve - Knowledge Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "b7c24dc2-3a56-42d8-b9f2-b5af36e9ad2f",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5ffc18f7-5a8c-4327-88b8-042c5bfcfc22",
+              "name": "=agent",
+              "value": "knowledge",
+              "type": "string"
+            },
+            {
+              "id": "d0fddd20-9af4-423e-ab06-655cc9fb014b",
+              "name": "=status",
+              "value": "received",
+              "type": "string"
+            },
+            {
+              "id": "d0355d75-3d23-47a1-ba4e-ed32c16834ca",
+              "name": "=event",
+              "value": "={{ $json.event }}",
+              "type": "string"
+            },
+            {
+              "id": "4f24dadc-ef48-4993-b397-23a89b0018c5",
+              "name": "=message",
+              "value": "={{ $json.message }}",
+              "type": "string"
+            },
+            {
+              "id": "494915fe-8700-4c95-bc8d-fb54a65e20c1",
+              "name": "=context",
+              "value": "={{ $json.context }}",
+              "type": "object"
+            },
+            {
+              "id": "ad8cee99-d8db-40ba-a6dc-5d639d695abb",
+              "name": "=source",
+              "value": "={{ $json.source }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "52a03d0c-b2a6-4d13-8717-af8eface9604",
+      "name": "Knowledge Agent - Input Check"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "73f300a8-21c1-484e-9826-e94893ad7551",
+              "name": "agent",
+              "value": "knowledge",
+              "type": "string"
+            },
+            {
+              "id": "cde10d15-47b5-44f1-b683-7832c0a780df",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "4718b9e2-bc4d-4d7d-b4bb-7d22b9692062",
+              "name": "=answer",
+              "value": "={{ $json.text || $json.output || $json.response || '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        880,
+        0
+      ],
+      "id": "fdaf80a3-ab4d-435b-9fe7-118a9e56b12c",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ String($json.message ?? '').trim() }}",
+        "options": {
+          "systemPromptTemplate": "\nYou are CampusResolve, an AI Student Helpdesk Assistant for Vignan University.\n\nFollow these rules strictly:\n\n1. Answer using ONLY the retrieved university documents.\n2. Never invent or assume university rules, fees, deadlines, facilities or procedures.\n3. If information is unavailable, say:\n\"This information is not available in the Vignan University knowledge base. Please contact the concerned university department.\"\n4. Do not present implied information as confirmed facts.\n5. Give clear, simple and student-friendly answers.\n6. Use bullet points or tables when useful.\n7. Respond in the same language used by the student.\n8. Include source URL whenever available.\n\nRetrieved university information:\n{context}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainRetrievalQa",
+      "typeVersion": 1.7,
+      "position": [
+        496,
+        0
+      ],
+      "id": "7bbc5244-f580-49bd-ab4c-c5ef5b8474c0",
+      "name": "Question and Answer Chain"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        384,
+        208
+      ],
+      "id": "9f0a3948-0fb8-4787-9b2d-e58ac0879722",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "YkTKYIy42d35843P",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.retrieverVectorStore",
+      "typeVersion": 1,
+      "position": [
+        640,
+        208
+      ],
+      "id": "5f7e64f2-3b43-48c1-89e9-3be0de413a01",
+      "name": "Vector Store Retriever"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePGVector",
+      "typeVersion": 1.4,
+      "position": [
+        736,
+        464
+      ],
+      "id": "844cb733-d9b3-4b55-aafe-b58402ee4b9e",
+      "name": "Postgres PGVector Store",
+      "credentials": {
+        "postgres": {
+          "id": "ea4fLGCzP6P4NEdr",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "bge-m3:latest"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOllama",
+      "typeVersion": 1,
+      "position": [
+        1072,
+        656
+      ],
+      "id": "3128879b-7e81-4154-b016-f9c0a75b0bd8",
+      "name": "Embeddings Ollama",
+      "credentials": {
+        "ollamaApi": {
+          "id": "xUzaT3ohcR406zOn",
+          "name": "Ollama account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Knowledge Agent - Input Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge Agent - Input Check": {
+      "main": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        []
+      ]
+    },
+    "Question and Answer Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Store Retriever": {
+      "ai_retriever": [
+        [
+          {
+            "node": "Question and Answer Chain",
+            "type": "ai_retriever",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres PGVector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Vector Store Retriever",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Ollama": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "eba13ea4-2d1b-47a4-9c24-35d84aee1b93",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7fd50924b60af66009f207377104af22a88b24d2f7ac1f91a04de16564467f44"
+  },
+  "nodeGroups": [],
+  "id": "pcoEkNOurFK1mL86",
+  "tags": []
+}

@@ -1,0 +1,173 @@
+{
+  "name": "CampusResolve - Routing Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "event"
+            },
+            {
+              "name": "source"
+            },
+            {
+              "name": "message"
+            },
+            {
+              "name": "context",
+              "type": "object"
+            },
+            {
+              "name": "ticket_code"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3b3866ab-83ae-43c6-b808-3f5110c81240",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\n\n// Extract Groq response from Basic LLM Chain\nlet raw = data.text ?? data.output ?? data.response;\n\nif (typeof raw !== \"string\" || !raw.trim()) {\n  throw new Error(\"Groq returned an empty response.\");\n}\n\n// Remove Markdown JSON formatting\nraw = raw\n  .replace(/```json/gi, \"\")\n  .replace(/```/g, \"\")\n  .trim();\n\n// Extract and parse JSON\nconst start = raw.indexOf(\"{\");\nconst end = raw.lastIndexOf(\"}\");\n\nif (start === -1 || end === -1) {\n  throw new Error(\"Valid JSON not found in Groq response.\");\n}\n\nconst result = JSON.parse(raw.substring(start, end + 1));\n\n// Get original ticket code\nconst triggerData =\n  $(\"When Executed by Another Workflow\").first().json;\n\nconst ticketCode =\n  triggerData.ticket_code ||\n  triggerData.context?.ticket_code;\n\nif (!ticketCode) {\n  throw new Error(\"Ticket code missing from Routing input.\");\n}\n\n// Validate routing result\nconst department = result.route_to || result.department;\n\nif (!department || !result.reason || !result.priority) {\n  throw new Error(\"Required routing information missing.\");\n}\n\n// Return output\nreturn [{\n  json: {\n    ticket_code: ticketCode,\n    request_type: result.request_type,\n    department: department,\n    route_to: department,\n    priority: result.priority,\n    reason: result.reason,\n    status: result.status || \"Open\"\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        0
+      ],
+      "id": "bb316227-e400-4f9e-b310-1f6ffe967fa5",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ 'http://host.docker.internal:8000/api/grievances/' + $json.ticket_code + '/assignment' }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "=department",
+              "value": "={{ $json.route_to || $json.department }}"
+            },
+            {
+              "name": "=reason",
+              "value": "={{ $json.reason }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        816,
+        0
+      ],
+      "id": "524e1621-b1ea-48dc-bd32-c2c0dd5bacc2",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=\nYou are CampusResolve Routing Agent for VFSTR University.\n\nYour task is to automatically identify the correct university department for every student grievance.\n\nSTUDENT COMPLAINT:\n{{ $json.message }}\n\nCONTEXT:\n{{ JSON.stringify($json.context || {}) }}\n\nROUTING INSTRUCTIONS:\n\n1. Understand the actual student complaint.\n2. Identify its request type.\n3. Select the most appropriate university department.\n4. Consider the nature and severity of the issue when assigning priority.\n5. Never assign all complaints to the same department.\n6. Do not invent university policies or claim that a complaint is resolved.\n7. Use these department mappings as prototype routing destinations:\n   - Academics: Academic Department / Concerned HOD\n   - Examinations: Examination Cell\n   - Hostel: Hostel Office\n   - Transport: Transport Office\n   - Administration: Administrative Office\n   - Other: Student Welfare Office\n8. Give a short explanation for the routing decision.\n\nRETURN ONLY VALID JSON:\n\n{\n  \"request_type\": \"Short description of issue\",\n  \"department\": \"Responsible department\",\n  \"route_to\": \"Same responsible department\",\n  \"priority\": \"Low, Medium, High or Critical\",\n  \"reason\": \"Reason for selecting this department\",\n  \"status\": \"Open\"\n}\n",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        224,
+        0
+      ],
+      "id": "7fe4ccef-188d-4758-8047-33db951dca7a",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        336,
+        208
+      ],
+      "id": "d015a1f8-3076-42fa-9225-87bc1d05a869",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "YkTKYIy42d35843P",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "626c4651-9865-4315-accd-78ba79a3323d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7fd50924b60af66009f207377104af22a88b24d2f7ac1f91a04de16564467f44"
+  },
+  "nodeGroups": [],
+  "id": "qUmWFrj0QO7FnBul",
+  "tags": []
+}
