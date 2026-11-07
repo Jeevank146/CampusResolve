@@ -1,0 +1,72 @@
+{
+  "name": "otp notification",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "campusresolve/send-otp",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "1fef3e4b-1f3d-4410-a512-4f157d5ea8ae",
+      "name": "Webhook",
+      "webhookId": "994941f0-cf0f-4b0e-964e-3bfc7c4baf25"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$json.body.student_email}}",
+        "subject": "CampusResolve Email Verification",
+        "message": "=Your OTP is {{$json.body.otp}}. It expires in 5 minutes.",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "c45325b1-2612-4ba1-9e67-fe71b30f8ceb",
+      "name": "Send a message",
+      "webhookId": "1ca4d562-5b99-4387-9980-f8e40e17de2d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "WCy4jWsaOxTKXkAZ",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "1292cca8-d797-40a4-8e19-f900e4841d72",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7fd50924b60af66009f207377104af22a88b24d2f7ac1f91a04de16564467f44"
+  },
+  "nodeGroups": [],
+  "id": "xbhE5gOjPFWl2veR",
+  "tags": []
+}

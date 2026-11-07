@@ -66,6 +66,30 @@ class Grievance(Base):
         String(120), default="Pending verification"
     )
 
+    # Photo-based grievance fields
+
+    submission_type: Mapped[str] = mapped_column(
+        String(20),
+        default="text",
+        server_default="text",
+        nullable=False
+    )
+
+    location: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True
+    )
+
+    image_public_id: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True
+    )
+
+    image_format: Mapped[str | None] = mapped_column(
+        String(20),
+        nullable=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now()
@@ -82,6 +106,10 @@ class Grievance(Base):
         cascade="all, delete-orphan",
         order_by="GrievanceUpdate.created_at"
     )
+
+    @property
+    def has_image(self) -> bool:
+        return bool(self.image_public_id)
 
 
 class GrievanceUpdate(Base):

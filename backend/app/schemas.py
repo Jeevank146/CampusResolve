@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, EmailStr
+
 
 Category = Literal[
     "Academics",
@@ -62,6 +64,12 @@ class GrievanceRead(BaseModel):
 
     status: str
     assigned_department: str
+
+    # Photo grievance fields
+    submission_type: str = "text"
+    location: str | None = None
+    has_image: bool = False
+    image_url: str | None = None
 
     created_at: datetime
     updated_at: datetime

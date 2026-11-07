@@ -186,6 +186,31 @@
               },
               "renameOutput": true,
               "outputKey": "followup"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "3fb243df-48a6-43f4-97fc-8a345e700790",
+                    "leftValue": "={{ $json.event }}",
+                    "rightValue": "=grievance.vision",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "vision"
             }
           ]
         },
@@ -225,7 +250,7 @@
       "typeVersion": 1.4,
       "position": [
         864,
-        -48
+        -192
       ],
       "id": "e094443e-789b-4012-80f5-b2b282d2ba8f",
       "name": "Call 'CampusResolve - Knowledge Agent'"
@@ -241,66 +266,9 @@
         },
         "workflowInputs": {
           "mappingMode": "defineBelow",
-          "value": {
-            "event": "={{ $json.event }}",
-            "source": "={{ $json.source }}",
-            "message": "={{ $json.message }}",
-            "context": "={{ $json.context }}",
-            "ticket_code": "={{ $json.context.ticket_code }}"
-          },
+          "value": {},
           "matchingColumns": [],
-          "schema": [
-            {
-              "id": "event",
-              "displayName": "event",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "source",
-              "displayName": "source",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "message",
-              "displayName": "message",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            },
-            {
-              "id": "context",
-              "displayName": "context",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "object",
-              "removed": false
-            },
-            {
-              "id": "ticket_code",
-              "displayName": "ticket_code",
-              "required": false,
-              "defaultMatch": false,
-              "display": true,
-              "canBeUsedToMatch": true,
-              "type": "string",
-              "removed": false
-            }
-          ],
+          "schema": [],
           "attemptToConvertTypes": false,
           "convertFieldsToString": true
         },
@@ -311,8 +279,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        848,
-        144
+        880,
+        48
       ],
       "id": "8e319003-9866-4f63-a1ce-464180919db8",
       "name": "Call 'CampusResolve - Triage Agent'"
@@ -398,8 +366,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        848,
-        352
+        864,
+        272
       ],
       "id": "5e4dfb9e-064f-43a6-aa6c-984b1fe0dce5",
       "name": "Call 'CampusResolve - Routing Agent'",
@@ -487,8 +455,8 @@
       "type": "n8n-nodes-base.executeWorkflow",
       "typeVersion": 1.4,
       "position": [
-        848,
-        544
+        864,
+        496
       ],
       "id": "1fd04e27-7552-4ec9-ae44-74d129a13436",
       "name": "Call 'CampusResolve – Follow-up Agent.'"
@@ -501,7 +469,7 @@
       "typeVersion": 2,
       "position": [
         864,
-        -208
+        -416
       ],
       "id": "7990efa5-9324-4c57-b118-4086627b3760",
       "name": "Code in JavaScript"
@@ -518,6 +486,36 @@
       ],
       "id": "e861978f-9177-4462-827d-76f8e62847b4",
       "name": "Prepare Knowledge Response"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "78SOvNoSjPZQbEpd",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/78SOvNoSjPZQbEpd",
+          "cachedResultName": "CampusResolve - Vision Agent"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.4,
+      "position": [
+        880,
+        752
+      ],
+      "id": "f506bb5f-4cf3-4f70-aa5c-37d488dd14d1",
+      "name": "Call 'CampusResolve - Vision Agent'"
     }
   ],
   "pinData": {},
@@ -580,6 +578,13 @@
             "type": "main",
             "index": 0
           }
+        ],
+        [
+          {
+            "node": "Call 'CampusResolve - Vision Agent'",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
@@ -604,6 +609,17 @@
           }
         ]
       ]
+    },
+    "Call 'CampusResolve - Vision Agent'": {
+      "main": [
+        [
+          {
+            "node": "Call 'CampusResolve - Triage Agent'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -611,7 +627,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "c2c18e5d-c5dc-48eb-815d-507f76e18434",
+  "versionId": "a5e25f31-f45f-415d-80b2-3f9fb0558d2e",
   "meta": {
     "instanceId": "7fd50924b60af66009f207377104af22a88b24d2f7ac1f91a04de16564467f44"
   },

@@ -3,33 +3,6 @@
   "nodes": [
     {
       "parameters": {
-        "formTitle": "CampusResolve Knowledge Upload",
-        "formDescription": "Upload official university knowledge documents",
-        "formFields": {
-          "values": [
-            {
-              "fieldLabel": "Upload University Document",
-              "fieldType": "file",
-              "multipleFiles": false,
-              "acceptFileTypes": ".pdf, .txt, .docx",
-              "requiredField": true
-            }
-          ]
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.formTrigger",
-      "typeVersion": 2.6,
-      "position": [
-        0,
-        0
-      ],
-      "id": "fef5a6bf-7c66-42e1-8e50-15f549eea537",
-      "name": "On form submission",
-      "webhookId": "8c1b678e-8b91-4500-8388-2e955ac21f08"
-    },
-    {
-      "parameters": {
         "mode": "insert",
         "options": {}
       },
@@ -80,21 +53,29 @@
           "name": "Ollama account"
         }
       }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "campusresolve/knowledge-upload",
+        "responseMode": "lastNode",
+        "options": {
+          "allowedOrigins": "http://localhost:5173"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5b957fb1-aafb-4592-b098-4d3ee04fcce9",
+      "name": "Webhook",
+      "webhookId": "c341eb44-b05e-4b0c-b6a8-46fd79a5be55"
     }
   ],
   "pinData": {},
   "connections": {
-    "On form submission": {
-      "main": [
-        [
-          {
-            "node": "Postgres PGVector Store",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Default Data Loader": {
       "ai_document": [
         [
@@ -116,14 +97,25 @@
           }
         ]
       ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Postgres PGVector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "bb161789-6120-45dd-a942-836ea924fe7f",
+  "versionId": "f3e140f8-da4c-4544-9218-36e0637995c5",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "7fd50924b60af66009f207377104af22a88b24d2f7ac1f91a04de16564467f44"

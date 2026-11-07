@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import './AdminDashboard.css';
 import {
   Activity,
   AlertTriangle,
@@ -27,6 +28,10 @@ type Ticket = {
   status: string;
   assigned_department: string;
   created_at: string;
+  submission_type?: string | null;
+  location?: string | null;
+  has_image?: boolean;
+  image_url?: string | null;
 };
 
 type Feedback = {
@@ -407,6 +412,27 @@ export default function AdminDashboard({
         </header>
 
         <section className="content">
+
+          <div className="admin-campus-banner">
+            <div className="admin-campus-banner-content">
+              <span className="admin-campus-kicker">CAMPUSRESOLVE • CAMPUS CARE</span>
+              <h2>A better campus starts with every voice.</h2>
+              <p>One place to review concerns, support students and keep campus life moving forward.</p>
+            </div>
+            <div className="admin-campus-art" aria-hidden="true">
+              <div className="admin-campus-sun" />
+              <div className="admin-campus-building">
+                <div className="admin-campus-roof" />
+                <div className="admin-campus-columns">
+                  <i /><i /><i /><i /><i />
+                </div>
+                <div className="admin-campus-steps" />
+              </div>
+              <div className="admin-campus-tree admin-campus-tree-left" />
+              <div className="admin-campus-tree admin-campus-tree-right" />
+              <div className="admin-campus-ground" />
+            </div>
+          </div>
 
           {/* Heading */}
           <div
@@ -953,6 +979,32 @@ export default function AdminDashboard({
             <p>
               <b>Description:</b> {selectedTicket.description}
             </p>
+
+            {selectedTicket.has_image && (
+              <section className="admin-photo-section" aria-label="Uploaded grievance photo">
+                <h3>Uploaded grievance photo</h3>
+                {selectedTicket.image_url ? (
+                  <a
+                    className="admin-photo-link"
+                    href={selectedTicket.image_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Open uploaded grievance photo in a new tab"
+                  >
+                    <img
+                      className="admin-photo-image"
+                      src={selectedTicket.image_url}
+                      alt={`Photo attached to grievance ${selectedTicket.ticket_code}`}
+                      loading="lazy"
+                    />
+                  </a>
+                ) : (
+                  <p className="admin-photo-unavailable">
+                    Photo is attached, but its secure preview URL is unavailable. Refresh the dashboard and try again.
+                  </p>
+                )}
+              </section>
+            )}
 
             <form
               className="ticket-form"

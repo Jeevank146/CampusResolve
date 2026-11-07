@@ -1,0 +1,208 @@
+{
+  "name": "CampusResolve - Grievance Email Notifications",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "campusresolve/grievance-notifications",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e193d458-80f3-4e56-a482-acc7de28291c",
+      "name": "Webhook",
+      "webhookId": "afcae375-cc51-433e-9320-4c02e3b83a7d"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "a02ce3b6-87fc-42c4-8b9a-4a601c2bef57",
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "department_assigned",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 4
+                },
+                "conditions": [
+                  {
+                    "id": "a6a2a91b-1b33-4a26-8bc9-6f3212a94f84",
+                    "leftValue": "={{ $json.body.event }}",
+                    "rightValue": "ticket_resolved",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        0
+      ],
+      "id": "4484eccd-c46a-495b-a62e-72de46c72e06",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.department_email }}",
+        "subject": "={{ 'New Grievance Assigned: ' + $json.body.ticket_code }}",
+        "message": "={{ `\n<div style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;background:#f4f7fc;padding:25px;color:#263858;\">\n\n  <div style=\"background:#173b91;padding:22px;text-align:center;border-radius:10px 10px 0 0;\">\n    <h2 style=\"color:white;margin:0;\">CampusResolve</h2>\n    <p style=\"color:#dbe7ff;margin:8px 0 0;\">Department Notification</p>\n  </div>\n\n  <div style=\"background:white;padding:28px;border:1px solid #e2e8f0;border-radius:0 0 10px 10px;\">\n\n    <h2 style=\"color:#173b91;\">New Grievance Assigned</h2>\n\n    <p>Dear ${$json.body.department},</p>\n\n    <p>A new student grievance has been assigned to your department. Please review the details below and take the necessary action.</p>\n\n    <div style=\"background:#f0f5ff;padding:18px;border-radius:8px;margin:20px 0;\">\n      <p><b>Ticket ID:</b> ${$json.body.ticket_code}</p>\n      <p><b>Student Name:</b> ${$json.body.student_name}</p>\n      <p><b>Issue:</b> ${$json.body.subject}</p>\n      <p><b>Description:</b> ${$json.body.description}</p>\n      <p><b>Priority:</b> ${$json.body.priority}</p>\n      <p><b>Urgency:</b> ${$json.body.urgency}</p>\n    </div>\n\n    <p>Please investigate the concern and update its status through the CampusResolve portal.</p>\n\n    <p style=\"margin-top:28px;\">Regards,<br><b>CampusResolve Support Team</b><br>Vignan University</p>\n  </div>\n\n  <p style=\"text-align:center;color:#8994a8;font-size:11px;margin-top:18px;\">\n    This is an automated notification. Please do not reply.\n  </p>\n</div>\n` }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        592,
+        64
+      ],
+      "id": "b10a46a3-e1af-4568-a96c-4d186d314de4",
+      "name": "department_assigned",
+      "webhookId": "89d43123-98b0-429a-8453-9792066e7ccb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "WCy4jWsaOxTKXkAZ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.student_email }}",
+        "subject": "={{ 'CampusResolve - Grievance Resolved: ' + $json.body.ticket_code }}",
+        "message": "={{ `\n<div style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;background:#f4f7fc;padding:25px;color:#263858;\">\n\n  <div style=\"background:#173b91;padding:22px;text-align:center;border-radius:10px 10px 0 0;\">\n    <h2 style=\"color:white;margin:0;\">CampusResolve</h2>\n    <p style=\"color:#dbe7ff;margin:8px 0 0;\">Grievance Resolution Update</p>\n  </div>\n\n  <div style=\"background:white;padding:28px;border:1px solid #e2e8f0;border-radius:0 0 10px 10px;\">\n\n    <h2 style=\"color:#15803d;\">Your Grievance Has Been Resolved!</h2>\n\n    <p>Dear ${$json.body.student_name},</p>\n\n    <p>We are pleased to inform you that your grievance has been marked as resolved by the CampusResolve team.</p>\n\n    <div style=\"background:#f0f5ff;padding:18px;border-radius:8px;margin:20px 0;\">\n      <p><b>Ticket ID:</b> ${$json.body.ticket_code}</p>\n      <p><b>Issue:</b> ${$json.body.subject}</p>\n      <p><b>Status:</b> <span style=\"color:#15803d;font-weight:bold;\">Resolved</span></p>\n      <p><b>Resolution Details:</b> ${$json.body.resolution_note}</p>\n    </div>\n\n    <p>Thank you for bringing this concern to our attention. We appreciate your patience and cooperation.</p>\n\n    <p style=\"margin-top:28px;\">Regards,<br><b>CampusResolve Support Team</b><br>Vignan University</p>\n  </div>\n\n  <p style=\"text-align:center;color:#8994a8;font-size:11px;margin-top:18px;\">\n    This is an automated notification. Please do not reply to this email.\n  </p>\n</div>\n` }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        304
+      ],
+      "id": "0bf84c1d-1eab-468a-8b98-f77e04ca6a46",
+      "name": "ticket_resolved",
+      "webhookId": "7b283603-28b0-48ad-948a-48b834214052",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "WCy4jWsaOxTKXkAZ",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.body.student_email }}",
+        "subject": "={{ 'CampusResolve - Ticket Assigned: ' + $json.body.ticket_code }}",
+        "message": "={{ `\n<div style=\"font-family:Arial,sans-serif;max-width:600px;margin:auto;background:#f4f7fc;padding:25px;color:#263858;\">\n\n  <div style=\"background:#173b91;padding:22px;text-align:center;border-radius:10px 10px 0 0;\">\n    <h2 style=\"color:white;margin:0;\">CampusResolve</h2>\n    <p style=\"color:#dbe7ff;margin:8px 0 0;\">Grievance Management System</p>\n  </div>\n\n  <div style=\"background:white;padding:28px;border:1px solid #e2e8f0;border-radius:0 0 10px 10px;\">\n\n    <h2 style=\"color:#173b91;margin-top:0;\">Grievance Assigned Successfully!</h2>\n\n    <p>Dear ${$json.body.student_name},</p>\n\n    <p>Your grievance has been successfully reviewed and assigned to the concerned department.</p>\n\n    <div style=\"background:#f0f5ff;padding:18px;border-radius:8px;margin:20px 0;\">\n      <p><b>Ticket ID:</b> ${$json.body.ticket_code}</p>\n      <p><b>Issue:</b> ${$json.body.subject}</p>\n      <p><b>Assigned Department:</b> ${$json.body.department}</p>\n    </div>\n\n    <p>The concerned department will review your grievance and take the necessary action.</p>\n\n    <p>Please keep your Ticket ID for future reference.</p>\n\n    <p style=\"margin-top:28px;\">Regards,<br><b>CampusResolve Support Team</b><br>Vignan University</p>\n\n  </div>\n\n  <p style=\"text-align:center;color:#8994a8;font-size:11px;margin-top:18px;\">\n    This is an automated notification. Please do not reply to this email.\n  </p>\n\n</div>\n` }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        -128
+      ],
+      "id": "02457b09-ee67-41b0-b75b-1a0df0da6ce6",
+      "name": "student_assignment_confirmation",
+      "webhookId": "cb66818d-4deb-4355-a1ef-8b878be268d2",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "WCy4jWsaOxTKXkAZ",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "department_assigned",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "student_assignment_confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ticket_resolved",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "department_assigned": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "226945a8-80bd-4088-a72e-12c0fbe0fe90",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7fd50924b60af66009f207377104af22a88b24d2f7ac1f91a04de16564467f44"
+  },
+  "nodeGroups": [],
+  "id": "0J4xQXnnelkJyjM0",
+  "tags": []
+}

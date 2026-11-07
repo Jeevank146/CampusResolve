@@ -1,0 +1,174 @@
+{
+  "name": "CampusResolve - Vision Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "78470cc9-35e4-472a-b66a-0976e3171f9b",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first()?.json || {};\nconst context = input.context || {};\n\n// Read image URL from root or nested context\nconst imageUrl =\n  input.image_url ||\n  input.photo_url ||\n  context.image_url ||\n  context.photo_url;\n\nconst description =\n  input.description ||\n  context.description ||\n  input.message ||\n  \"\";\n\nconst location =\n  input.location ||\n  context.location ||\n  \"\";\n\nif (!imageUrl) {\n  throw new Error(\"Image URL is missing from Supervisor input.\");\n}\n\nif (\n  typeof imageUrl !== \"string\" ||\n  !imageUrl.startsWith(\"https://\")\n) {\n  throw new Error(\"A valid HTTPS image URL is required.\");\n}\n\nconst visionPrompt = `\nYou are the Vision Agent for CampusResolve.\n\nAnalyze the uploaded campus issue photograph.\n\nStudent description: ${description}\nCampus location: ${location}\n\nIdentify:\n1. What is visibly wrong?\n2. What evidence is visible in the photograph?\n3. Is there a recognizable campus issue?\n4. Is manual verification required?\n\nRules:\n- Do not invent problems.\n- Do not assume damage that is not visible.\n- Use the student description as additional context.\n- If the image is unclear, request manual review.\n- Return valid JSON only.\n\nRequired output:\n{\n  \"issue_detected\": true,\n  \"issue_description\": \"\",\n  \"visible_evidence\": \"\",\n  \"confidence\": 0,\n  \"requires_manual_review\": false\n}\n`;\n\nreturn [{\n  json: {\n    ...input,\n    image_url: imageUrl,\n    description,\n    location,\n    vision_prompt: visionPrompt\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "e30d43b3-a9e2-46cb-9c79-3c975cdd3593",
+      "name": "Prepare Image for Vision"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.vision_prompt }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "HumanMessagePromptTemplate",
+              "messageType": "imageUrl",
+              "imageUrl": "={{ $json.image_url }}"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        448,
+        0
+      ],
+      "id": "3d046491-ef39-4ef4-96fa-6a5c224d462a",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3.8-27b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        384,
+        208
+      ],
+      "id": "c147fb32-6523-4182-aee5-7bb7005080a5",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "YkTKYIy42d35843P",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"issue_detected\": {\n      \"type\": \"boolean\"\n    },\n    \"issue_description\": {\n      \"type\": \"string\"\n    },\n    \"visible_evidence\": {\n      \"type\": \"string\"\n    },\n    \"confidence\": {\n      \"type\": \"number\"\n    },\n    \"requires_manual_review\": {\n      \"type\": \"boolean\"\n    }\n  },\n  \"required\": [\n    \"issue_detected\",\n    \"issue_description\",\n    \"visible_evidence\",\n    \"confidence\",\n    \"requires_manual_review\"\n  ],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        656,
+        208
+      ],
+      "id": "604920f2-05bb-4ccb-a6ef-e429c99ec8ac",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const original = $(\"Prepare Image for Vision\").first().json;\nconst result = $input.first().json;\n\nfunction extractVision(data) {\n  if (typeof data === \"string\") {\n    const cleaned = data\n      .replace(/^```json\\s*/i, \"\")\n      .replace(/\\s*```$/i, \"\")\n      .trim();\n\n    try {\n      return extractVision(JSON.parse(cleaned));\n    } catch {\n      return null;\n    }\n  }\n\n  if (!data || typeof data !== \"object\") {\n    return null;\n  }\n\n  if (\n    Object.prototype.hasOwnProperty.call(data, \"issue_detected\") &&\n    Object.prototype.hasOwnProperty.call(data, \"issue_description\")\n  ) {\n    return data;\n  }\n\n  for (const key of [\"output\", \"text\", \"response\", \"result\", \"data\"]) {\n    if (data[key] !== undefined) {\n      const extracted = extractVision(data[key]);\n      if (extracted) return extracted;\n    }\n  }\n\n  return null;\n}\n\nconst vision = extractVision(result);\n\nif (!vision) {\n  throw new Error(\"Vision Agent did not return valid structured output.\");\n}\n\nreturn [{\n  json: {\n    ...original,\n    vision_analysis: vision,\n    issue_detected: vision.issue_detected,\n    issue_description: vision.issue_description,\n    visible_evidence: vision.visible_evidence,\n    confidence: vision.confidence,\n    requires_manual_review: vision.requires_manual_review\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        816,
+        0
+      ],
+      "id": "d7d276c2-7c5e-4d82-8d90-522c012d2f70",
+      "name": "Prepare Vision Result"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Prepare Image for Vision",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Image for Vision": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Prepare Vision Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "ac3182ab-c92f-44cd-9e32-7eb6099dce7f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "7fd50924b60af66009f207377104af22a88b24d2f7ac1f91a04de16564467f44"
+  },
+  "nodeGroups": [],
+  "id": "78SOvNoSjPZQbEpd",
+  "tags": []
+}
