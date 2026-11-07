@@ -49,7 +49,7 @@
     {
       "parameters": {
         "method": "PATCH",
-        "url": "={{ 'http://host.docker.internal:8000/api/grievances/' + $json.ticket_code + '/assignment' }}",
+        "url": "={{ 'https://campusresolve-api-gmwf.onrender.com/api/grievances/' + $json.ticket_code + '/assignment' }}",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [

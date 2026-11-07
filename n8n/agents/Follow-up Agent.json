@@ -83,7 +83,7 @@
     },
     {
       "parameters": {
-        "url": "={{ 'http://host.docker.internal:8000/api/grievances/' + $json.ticket_code }}",
+        "url": "={{ 'https://campusresolve-api-gmwf.onrender.com/api/grievances/' + $json.ticket_code }}",
         "options": {}
       },
       "type": "n8n-nodes-base.httpRequest",
