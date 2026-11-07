@@ -15,8 +15,9 @@ class Settings(BaseSettings):
     campusresolve_department_email_transport: str = ""
     campusresolve_department_email_administration: str = ""
     campusresolve_department_email_other: str = ""
+    n8n_otp_webhook_url: str = ""
 
-    frontend_origin: str = "http://localhost:5173"
+    frontend_origin: str = "http://localhost:5174"
     app_env: str = "development"
     n8n_supervisor_webhook_url: str = (
         "http://localhost:5678/webhook/campusresolve/supervisor"
